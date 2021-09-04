@@ -25,7 +25,7 @@ namespace FileCreationAlert {
             return config;
         }
 
-        static void Process(int thread, string path) {
+        static void Process(int thread, string path, string mailTitle) {
             lock (logLock)
                 Console.WriteLine($"[{thread}] Looking for file changes at {path}.");
 
@@ -46,13 +46,13 @@ namespace FileCreationAlert {
                         lock (logLock)
                             Console.WriteLine($"[{thread}] New file: {fileName}.");
 
-                        using (MailMessage message = new MailMessage(config["address"], config["address"], config["title"],
+                        using (MailMessage message = new MailMessage(config["address"], config["address"], mailTitle,
                             config["body"].Replace("%f", fileName))) {
                             try {
                                 lock (mailLock)
                                     smtp.Send(message);
                                 lock (logLock)
-                                    Console.WriteLine($"[{thread}] E-mail sent.");
+                                    Console.WriteLine($"[{thread}] E-mail sent with this title: {mailTitle}");
                             } catch {
                                 lock (logLock)
                                     Console.WriteLine($"[{thread}] Couldn't send e-mail, please check the configuration file!");
@@ -90,7 +90,12 @@ namespace FileCreationAlert {
             while (config.ContainsKey("path" + pathCount)) {
                 if (Directory.Exists(config["path" + pathCount])) {
                     int i = pathCount;
-                    threads.Add(new Thread(new ThreadStart(() => Process(i, new DirectoryInfo(config["path" + i]).FullName))));
+                    string title;
+                    if (config.ContainsKey("title" + i))
+                        title = config["title" + i];
+                    else
+                        title = config["title"];
+                    threads.Add(new Thread(new ThreadStart(() => Process(i, new DirectoryInfo(config["path" + i]).FullName, title))));
                     threads[threads.Count - 1].Start();
                 } else
                     lock (logLock)
@@ -126,6 +131,7 @@ body=File name: %f
 [Application]
 ; The folder to watch for changes, the default is the local folder
 ; Additional folders can be added like path2, path3, path4...
+; This also works for title, it can be overridden like title1, title2...
 path1=.
 ; Filter for single file type if needed
 pattern=*.*
