@@ -95,7 +95,7 @@ namespace FileCreationAlert {
                         title = config["title" + i];
                     else
                         title = config["title"];
-                    threads.Add(new Thread(new ThreadStart(() => Process(i, new DirectoryInfo(config["path" + i]).FullName, title))));
+                    threads.Add(new Thread(() => Process(i, new DirectoryInfo(config["path" + i]).FullName, title)));
                     threads[threads.Count - 1].Start();
                 } else
                     lock (logLock)
