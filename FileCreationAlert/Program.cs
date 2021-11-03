@@ -32,6 +32,10 @@ namespace FileCreationAlert {
             string[] contents = Directory.GetFiles(path, config["pattern"]);
             while (true) {
                 Thread.Sleep(int.Parse(config["interval"]) * 1000);
+                if (!Directory.Exists(path)) {
+                    Console.WriteLine($"[{thread}] {path} is unreadable. Retrying in {config["interval"]} seconds.");
+                    continue;
+                }
                 string[] newContents = Directory.GetFiles(path, config["pattern"]);
                 for (int n = 0; n < newContents.Length; ++n) {
                     bool exists = false;
